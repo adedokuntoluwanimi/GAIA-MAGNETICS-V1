@@ -298,6 +298,9 @@ def split_train_predict_explicit(
     Returns:
         Tuple of (train_df, predict_df)
     """
+    # Make a copy to avoid modifying original
+    df = df.copy()
+    
     # Compute cumulative distance for ALL rows first
     df = compute_cumulative_distance(df, x_col, y_col, coordinate_system)
     
@@ -310,17 +313,25 @@ def split_train_predict_explicit(
     
     # Standardize train DataFrame
     train_df = pd.DataFrame({
-        "distance": train_rows["distance"],
-        "x": train_rows[x_col],
-        "y": train_rows[y_col],
-        "value": pd.to_numeric(train_rows[value_col], errors='coerce')
+        "distance": train_rows["distance"].values,
+        "x": train_rows[x_col].values,
+        "y": train_rows[y_col].values,
+        "value": pd.to_numeric(train_rows[value_col], errors='coerce').values
     })
     
     # Standardize predict DataFrame (no value column)
     predict_df = pd.DataFrame({
-        "distance": predict_rows["distance"],
-        "x": predict_rows[x_col],
-        "y": predict_rows[y_col]
+        "distance": predict_rows["distance"].values,
+        "x": predict_rows[x_col].values,
+        "y": predict_rows[y_col].values
     })
+    
+    # Remove any rows with NaN distances
+    train_df = train_df.dropna(subset=['distance', 'x', 'y', 'value'])
+    predict_df = predict_df.dropna(subset=['distance', 'x', 'y'])
+    
+    # Reset index
+    train_df = train_df.reset_index(drop=True)
+    predict_df = predict_df.reset_index(drop=True)
     
     return train_df, predict_df

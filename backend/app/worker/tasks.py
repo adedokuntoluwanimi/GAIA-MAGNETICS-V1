@@ -168,8 +168,10 @@ def process_job(job_id: str):
         upload_csv(job_id, "input/predict.csv", predict_df)
         
         # Prediction input for SageMaker: just features (distance)
+        # Ensure no NaN or empty values
         predict_sagemaker = predict_df[["distance"]].copy()
-        upload_csv(job_id, "input/predict_sagemaker.csv", predict_sagemaker, header=False)  # For SageMaker (no header)
+        predict_sagemaker = predict_sagemaker.dropna()
+        upload_csv(job_id, "input/predict_sagemaker.csv", predict_sagemaker, header=False)
         
         # Upload raw file for backup
         upload_raw_file(job_id, str(raw_path))
